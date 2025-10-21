@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -36,9 +38,11 @@ public class User implements UserDetails {
     private String password;
 
     @Column(name = "raw_user_meta_data", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String rawUserMetaData;
 
     @Column(name = "raw_app_meta_data", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String rawAppMetaData;
 
     @CreatedDate
@@ -57,6 +61,24 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
+
+    @Column(name = "full_name")
+    private String fullName;
+
+    @Column(name = "picture_url")
+    private String pictureUrl;
+
+    @Column(name = "provider")
+    private String provider;
+
+    @Column(name = "google_access_token", length = 2048)
+    private String googleAccessToken;
+
+    @Column(name = "google_refresh_token", length = 512)
+    private String googleRefreshToken;
+
+    @Column(name = "google_token_expiry")
+    private LocalDateTime googleTokenExpiry;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

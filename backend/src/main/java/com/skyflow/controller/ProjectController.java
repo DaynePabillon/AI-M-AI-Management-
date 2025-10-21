@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/projects")
+@RequestMapping("/projects")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:3000")
 public class ProjectController {

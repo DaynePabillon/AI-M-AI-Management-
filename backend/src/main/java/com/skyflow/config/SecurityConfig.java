@@ -1,6 +1,7 @@
 package com.skyflow.config;
 
 import com.skyflow.security.JwtAuthenticationFilter;
+import com.skyflow.security.OAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +28,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -34,14 +36,26 @@ public class SecurityConfig {
             .cors(cors -> cors.configure(http)) // Enable CORS
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll() // TEMPORARILY ALLOW ALL - FOR TESTING ONLY
+                .requestMatchers("/auth/**", "/oauth2/**", "/login/oauth2/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .oauth2Login(oauth2 -> oauth2
+                .successHandler(oAuth2AuthenticationSuccessHandler)
+                .failureUrl("http://localhost:3000/login?error=true")
+            )
+            .exceptionHandling(exception -> exception
+                .authenticationEntryPoint((request, response, authException) -> {
+                    // Don't redirect to OAuth login for API endpoints
+                    response.setStatus(401);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"success\":false,\"message\":\"Unauthorized\"}");
+                })
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            );
-            // Commented out authentication for testing
-            // .authenticationProvider(authenticationProvider())
-            // .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            )
+            .authenticationProvider(authenticationProvider())
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

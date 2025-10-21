@@ -1,10 +1,14 @@
 package com.skyflow.controller;
 
 import com.skyflow.dto.*;
+import com.skyflow.model.User;
+import com.skyflow.repository.UserRepository;
 import com.skyflow.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final UserRepository userRepository;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(
@@ -60,8 +65,16 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<Object>> getCurrentUser() {
-        // This will be implemented with @AuthenticationPrincipal
-        return ResponseEntity.ok(ApiResponse.success("User retrieved", null));
+    public ResponseEntity<ApiResponse<User>> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error("User not authenticated"));
+        }
+        
+        // Get the full User entity from the database
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        return ResponseEntity.ok(ApiResponse.success("User retrieved", user));
     }
 }
