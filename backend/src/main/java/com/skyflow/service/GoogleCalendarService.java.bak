@@ -1,0 +1,62 @@
+package com.skyflow.service;
+
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.calendar.Calendar;
+import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.Events;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class GoogleCalendarService {
+
+    @Value("${google.application-name}")
+    private String applicationName;
+
+    public List<Event> getUpcomingEvents(String accessToken, int maxResults) {
+        try {
+            GoogleCredential credential = new GoogleCredential().setAccessToken(accessToken);
+            
+            Calendar service = new Calendar.Builder(
+                    GoogleNetHttpTransport.newTrustedTransport(),
+                    JacksonFactory.getDefaultInstance(),
+                    credential)
+                    .setApplicationName(applicationName)
+                    .build();
+
+            Events events = service.events().list("primary")
+                    .setMaxResults(maxResults)
+                    .setTimeMin(new com.google.api.client.util.DateTime(System.currentTimeMillis()))
+                    .setOrderBy("startTime")
+                    .setSingleEvents(true)
+                    .execute();
+
+            return events.getItems();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch calendar events: " + e.getMessage());
+        }
+    }
+
+    public Event createEvent(String accessToken, Event event) {
+        try {
+            GoogleCredential credential = new GoogleCredential().setAccessToken(accessToken);
+            
+            Calendar service = new Calendar.Builder(
+                    GoogleNetHttpTransport.newTrustedTransport(),
+                    JacksonFactory.getDefaultInstance(),
+                    credential)
+                    .setApplicationName(applicationName)
+                    .build();
+
+            return service.events().insert("primary", event).execute();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create calendar event: " + e.getMessage());
+        }
+    }
+}

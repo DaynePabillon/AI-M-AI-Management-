@@ -1,0 +1,78 @@
+package com.skyflow.controller;
+
+import com.google.api.services.calendar.model.Event;
+import com.google.api.services.drive.model.File;
+import com.skyflow.dto.ApiResponse;
+import com.skyflow.service.GoogleCalendarService;
+import com.skyflow.service.GoogleDriveService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/google")
+@RequiredArgsConstructor
+public class GoogleApiController {
+
+    private final GoogleCalendarService calendarService;
+    private final GoogleDriveService driveService;
+
+    @GetMapping("/calendar/events")
+    public ResponseEntity<ApiResponse<List<Event>>> getCalendarEvents(
+            @RequestHeader("X-Google-Token") String accessToken,
+            @RequestParam(defaultValue = "10") int maxResults
+    ) {
+        try {
+            List<Event> events = calendarService.getUpcomingEvents(accessToken, maxResults);
+            return ResponseEntity.ok(ApiResponse.success(events));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/calendar/events")
+    public ResponseEntity<ApiResponse<Event>> createCalendarEvent(
+            @RequestHeader("X-Google-Token") String accessToken,
+            @RequestBody Event event
+    ) {
+        try {
+            Event created = calendarService.createEvent(accessToken, event);
+            return ResponseEntity.ok(ApiResponse.success("Event created", created));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @GetMapping("/drive/files")
+    public ResponseEntity<ApiResponse<List<File>>> getDriveFiles(
+            @RequestHeader("X-Google-Token") String accessToken,
+            @RequestParam(defaultValue = "10") int maxResults
+    ) {
+        try {
+            List<File> files = driveService.listFiles(accessToken, maxResults);
+            return ResponseEntity.ok(ApiResponse.success(files));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/drive/folders")
+    public ResponseEntity<ApiResponse<File>> createDriveFolder(
+            @RequestHeader("X-Google-Token") String accessToken,
+            @RequestParam String name,
+            @RequestParam(required = false) String parentId
+    ) {
+        try {
+            File folder = driveService.createFolder(accessToken, name, parentId);
+            return ResponseEntity.ok(ApiResponse.success("Folder created", folder));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+}

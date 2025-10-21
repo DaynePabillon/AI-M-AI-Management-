@@ -1,0 +1,71 @@
+package com.skyflow.service;
+
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.model.File;
+import com.google.api.services.drive.model.FileList;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class GoogleDriveService {
+
+    @Value("${google.application-name}")
+    private String applicationName;
+
+    public List<File> listFiles(String accessToken, int maxResults) {
+        try {
+            GoogleCredential credential = new GoogleCredential().setAccessToken(accessToken);
+            
+            Drive service = new Drive.Builder(
+                    GoogleNetHttpTransport.newTrustedTransport(),
+                    JacksonFactory.getDefaultInstance(),
+                    credential)
+                    .setApplicationName(applicationName)
+                    .build();
+
+            FileList result = service.files().list()
+                    .setPageSize(maxResults)
+                    .setFields("files(id, name, mimeType, modifiedTime, size)")
+                    .setOrderBy("modifiedTime desc")
+                    .execute();
+
+            return result.getFiles();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch drive files: " + e.getMessage());
+        }
+    }
+
+    public File createFolder(String accessToken, String folderName, String parentId) {
+        try {
+            GoogleCredential credential = new GoogleCredential().setAccessToken(accessToken);
+            
+            Drive service = new Drive.Builder(
+                    GoogleNetHttpTransport.newTrustedTransport(),
+                    JacksonFactory.getDefaultInstance(),
+                    credential)
+                    .setApplicationName(applicationName)
+                    .build();
+
+            File fileMetadata = new File();
+            fileMetadata.setName(folderName);
+            fileMetadata.setMimeType("application/vnd.google-apps.folder");
+            
+            if (parentId != null) {
+                fileMetadata.setParents(List.of(parentId));
+            }
+
+            return service.files().create(fileMetadata)
+                    .setFields("id, name")
+                    .execute();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create folder: " + e.getMessage());
+        }
+    }
+}
