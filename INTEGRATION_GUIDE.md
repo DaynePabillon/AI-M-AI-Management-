@@ -38,11 +38,11 @@ Frontend runs on: http://localhost:3000
 ### 3. Update Frontend .env
 ```env
 # Google OAuth
-REACT_APP_GOOGLE_CLIENT_ID=435162604229-9ja5kvdm8tb9dh5udfvb3slg4rsfku5m.apps.googleusercontent.com
+REACT_APP_GOOGLE_CLIENT_ID=your_google_client_id_here
 
 # Supabase
-REACT_APP_SUPABASE_URL=https://oqcczdtekzxevldbtfbb.supabase.co
-REACT_APP_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+REACT_APP_SUPABASE_URL=your_supabase_project_url
+REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # Backend API
 REACT_APP_API_BASE_URL=http://localhost:8080/api
@@ -332,7 +332,7 @@ cors:
 **Solution**:
 - Verify Supabase credentials in `application.yml`
 - Check if Supabase database is accessible
-- Test connection: `psql -h db.oqcczdtekzxevldbtfbb.supabase.co -U postgres`
+- Test connection: `psql -h db.your_supabase_project.supabase.co -U postgres`
 
 ## 📝 Complete Integration Checklist
 
